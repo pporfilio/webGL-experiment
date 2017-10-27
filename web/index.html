@@ -435,7 +435,7 @@
             }
         }
 
-        function handleColorChange(env, event) {
+        function handleColorChange(env) {
             updateCubeColors(env);
         }
 
@@ -479,12 +479,44 @@
 
             var category = document.getElementById("settings-name").value;
 
-            setSettingsItem(category, "cube-scale", document.getElementById("cube-scale").value);
-
-            var vertexColorInputs = getVertexColorInputs();
-            for (var i = 0; i < vertexColorInputs.length; ++i) {
-                setSettingsItem(category, vertexColorInputs[i].id, vertexColorInputs[i].value);
+            var keys = ["cube-scale", "settings-name"];
+            var inputs = [];
+            for (var i = 0; i < keys.length; ++i) {
+                inputs.push(document.getElementById(keys[i]));
             }
+            inputs.concat(getVertexColorInputs());
+
+            for (var i = 0; i < inputs.length; ++i) {
+                setSettingsItem(category, inputs[i].id, inputs[i].value);
+            }
+        }
+
+        function getCategoryKeys(category) {
+            var storage = window.localStorage;
+            var result = [];
+            if (!category) {
+                return result;
+            }
+            for (var i = 0; i < storage.length; ++i) {
+                if (storage.key(i).startsWith(category)) {
+                    // Split the key at the first "/" and add the second part to the result list.
+                    result.push(storage.key(i).split("/", 2)[1])
+                }
+            }
+            return result;
+        }
+
+        function handleLoadSettings(env, event) {
+            var category = document.getElementById("category-select").value;
+            var keys = getCategoryKeys(category);
+            for (var i = 0; i < keys.length; ++i) {
+                var control = document.getElementById(keys[i]);
+                if (control) {
+                    control.value = getSettingsItem(category, keys[i]);
+                }
+            }
+            // I can't figure out how to make the color changes trigger the `oninput` event
+            handleColorChange(env);
         }
 
         function populateCategorySelect() {
@@ -619,11 +651,13 @@
 
             var vertexColorInputs = getVertexColorInputs();
             for (var i = 0; i < vertexColorInputs.length; ++i) {
-                vertexColorInputs[i].onchange = function(event) { handleColorChange(env, event); };
+                vertexColorInputs[i].oninput = function(event) { handleColorChange(env); };
             }
 
             var storeSettingsButton = document.getElementById("store-settings");
             storeSettingsButton.onclick = function(event) { handleStoreSettings(event); }
+            var loadSettingsButton = document.getElementById("load-settings");
+            loadSettingsButton.onclick = function(event) { handleLoadSettings(env, event); }
 
             requestAnimFrame(function(time) { tick(time, env); });
         }
