@@ -452,6 +452,25 @@
             storage.setItem("__categories__", JSON.stringify(categories));
         }
 
+        function deleteSettingsCategory(category) {
+            var storage = window.localStorage;
+
+            console.log("removing category " + category);
+            var keys = getCategoryKeys(category);
+            for (var i = 0; i < keys.length; ++i) {
+                console.log("removing setting " + category + "/" + keys[i]);
+                storage.removeItem(category + "/" + keys[i]);
+            }
+
+            var categories = getSettingsCategories();
+            var location = categories.findIndex(function(elt) { return elt == category; });
+            if (location != -1) {
+                categories.splice(location, 1);
+                setSettingsCategories(categories);
+                populateCategorySelect();
+            }
+        }
+
         function ensureSettingsCategory(category) {
             var categories = getSettingsCategories();
             if (-1 == categories.findIndex(function(elt) { return elt == category; })) {
@@ -478,6 +497,10 @@
             var storage = window.localStorage;
 
             var category = document.getElementById("settings-name").value;
+
+            if (!category) {
+                return;
+            }
 
             var keys = ["cube-scale", "settings-name"];
             var inputs = [];
@@ -535,11 +558,13 @@
             }
         }
 
-        // handle storage changed -> update category list
-        // insert new categories at the front of the list
-        // add menu and button to read settings
-        // add function to load settings from storage
-        // add button to delete a settings category
+        function handleDeleteSettings(env) {
+            var settingsName = document.getElementById("settings-name");
+            var category = settingsName.value;
+            deleteSettingsCategory(category);
+            populateCategorySelect();
+            settingsName.value = "";
+        }
 
         function start() {
             var canvas = document.getElementById("glCanvas");
@@ -658,9 +683,17 @@
             storeSettingsButton.onclick = function(event) { handleStoreSettings(event); }
             var loadSettingsButton = document.getElementById("load-settings");
             loadSettingsButton.onclick = function(event) { handleLoadSettings(env, event); }
+            var deleteSettingsButton = document.getElementById("delete-settings");
+            deleteSettingsButton.onclick = function(event) { handleDeleteSettings(env); }
 
             requestAnimFrame(function(time) { tick(time, env); });
         }
+
+        // TODOS:
+        // figure out how to disable buttons when settings-name is empty
+        // update handlers to not take the event if they don't use it
+        // look into var vs. let
+        // organize into multiple files
     </script>
 
     <style>
@@ -721,6 +754,10 @@
             Settings Name: <input id="settings-name" type="text">
             <br />
             <input id="store-settings" type="button" value="Store Settings">
+            <br />
+            <br />
+            <br />
+            <input id="delete-settings" type="button" value="Delete Settings">
         </div>
         <div>
             <div id="settings-header">Select Settings</div>
