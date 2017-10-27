@@ -240,15 +240,21 @@
             return [r / 255, g / 255, b / 255, a];
         }
 
+        function getVertexColorInputs() {
+            var result = [];
+            for (var i = 0; i < 8; ++i) {
+                result.push(document.getElementById("vertex" + i + "color"));
+            }
+            return result;
+        }
+
         function getCubeColors() {
-            return [].concat(hexToRGBA(document.getElementById("vertex0color").value, 1),
-                             hexToRGBA(document.getElementById("vertex1color").value, 1),
-                             hexToRGBA(document.getElementById("vertex2color").value, 1),
-                             hexToRGBA(document.getElementById("vertex3color").value, 1),
-                             hexToRGBA(document.getElementById("vertex4color").value, 1),
-                             hexToRGBA(document.getElementById("vertex5color").value, 1),
-                             hexToRGBA(document.getElementById("vertex6color").value, 1),
-                             hexToRGBA(document.getElementById("vertex7color").value, 1))
+            var result = [];
+            var colorInputs = getVertexColorInputs();
+            for (var i = 0; i < colorInputs.length; ++i) {
+                result = result.concat(hexToRGBA(colorInputs[i].value, 1));
+            }
+            return result;
         }
 
         function getSquareColors() {
@@ -342,7 +348,7 @@
                 cubeLocation = vec3.fromValues(env.cubeLocations[index][0],
                                                env.cubeLocations[index][1],
                                                env.cubeLocations[index][2]);
-                var scaleInput = document.getElementById("cubeScale");
+                var scaleInput = document.getElementById("cube-scale");
                 var scaleValue = clamp(scaleInput.value, 0.5, 5);
 
                 var cubeTransformMatrix = mat4.identity(mat4.create());
@@ -432,6 +438,76 @@
         function handleColorChange(env, event) {
             updateCubeColors(env);
         }
+
+        function getSettingsCategories() {
+            var storage = window.localStorage;
+            if (!storage.getItem("__categories__")) {
+                storage.setItem("__categories__", JSON.stringify([]));
+            }
+            return JSON.parse(storage.getItem("__categories__"));
+        }
+
+        function setSettingsCategories(categories) {
+            var storage = window.localStorage;
+            storage.setItem("__categories__", JSON.stringify(categories));
+        }
+
+        function ensureSettingsCategory(category) {
+            var categories = getSettingsCategories();
+            if (-1 == categories.findIndex(function(elt) { return elt == category; })) {
+                categories.unshift(category);
+                setSettingsCategories(categories);
+                // Can't get storage events on the same page that triggered them.
+                // According to https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
+                populateCategorySelect();
+            }
+        }
+
+        function setSettingsItem(category, key, value) {
+            ensureSettingsCategory(category);
+            var storage = window.localStorage;
+            storage.setItem(category + "/" + key, value);
+        }
+
+        function getSettingsItem(category, key) {
+            var storage = window.localStorage;
+            return storage.getItem(category + "/" + key);
+        }
+
+        function handleStoreSettings(event) {
+            var storage = window.localStorage;
+
+            var category = document.getElementById("settings-name").value;
+
+            setSettingsItem(category, "cube-scale", document.getElementById("cube-scale").value);
+
+            var vertexColorInputs = getVertexColorInputs();
+            for (var i = 0; i < vertexColorInputs.length; ++i) {
+                setSettingsItem(category, vertexColorInputs[i].id, vertexColorInputs[i].value);
+            }
+        }
+
+        function populateCategorySelect() {
+            var categorySelect = document.getElementById("category-select");
+            var categories = getSettingsCategories();
+
+            var children = categorySelect.children;
+            while (children.length != 0) {
+                children[0].remove();
+            }
+
+            for (var i = 0; i < categories.length; ++i) {
+                var option = document.createElement("option");
+                option.text = categories[i];
+                categorySelect.appendChild(option);
+            }
+        }
+
+        // handle storage changed -> update category list
+        // insert new categories at the front of the list
+        // add menu and button to read settings
+        // add function to load settings from storage
+        // add button to delete a settings category
 
         function start() {
             var canvas = document.getElementById("glCanvas");
@@ -529,6 +605,10 @@
             env.deltaY = 0;
             env.cubeLocations = generateCubeLocations(10, 10);
 
+            // Generate HTML
+            populateCategorySelect();
+
+            // Set up handlers
             document.onkeydown = function(event) { handleKeyDown(env, event); };
             document.onkeyup = function(event) { handleKeyUp(env, event); };
             document.onpointerlockchange = function() { handlePointerLockChange(env); };
@@ -537,18 +617,16 @@
 
             canvas.onclick = function(event) { handleClick(env, event); };
 
-            for (var i = 0; i < 8; ++i) {
-                console.log(i);
-                console.log("vertex" + i + "color");
-                var colorInput = document.getElementById("vertex" + i + "color");
-                console.log(colorInput);
-                colorInput.onchange = function(event) { handleColorChange(env, event); };
+            var vertexColorInputs = getVertexColorInputs();
+            for (var i = 0; i < vertexColorInputs.length; ++i) {
+                vertexColorInputs[i].onchange = function(event) { handleColorChange(env, event); };
             }
+
+            var storeSettingsButton = document.getElementById("store-settings");
+            storeSettingsButton.onclick = function(event) { handleStoreSettings(event); }
 
             requestAnimFrame(function(time) { tick(time, env); });
         }
-
-
     </script>
 
     <style>
@@ -572,7 +650,7 @@
           color: #d9480f;
         }
 
-        #cube-color-header {
+        #settings-header {
             font-weight: bold;
             font-size: 20px;
         }
@@ -586,10 +664,10 @@
             <canvas id="glCanvas" style="border: none;" width="800" height="600"></canvas>
         </div>
         <div>
-            Cube Scale: <input id="cubeScale" type="number" max=5 min=0.5 step=0.1>
+            Cube Scale: <input id="cube-scale" type="number" max=5 min=0.5 step=0.1 value=1>
             <br />
             <br />
-            <div id="cube-color-header">Cube Colors</div>
+            <div id="settings-header">Cube Colors</div>
             Vertex 1: <input id="vertex0color" type="color" value="#00FFFF">
             <br />
             Vertex 2: <input id="vertex1color" type="color" value="#FFFFFF">
@@ -605,8 +683,17 @@
             Vertex 7: <input id="vertex6color" type="color" value="#FF0000">
             <br />
             Vertex 8: <input id="vertex7color" type="color" value="#000000">
+            <br />
+            Settings Name: <input id="settings-name" type="text">
+            <br />
+            <input id="store-settings" type="button" value="Store Settings">
         </div>
         <div>
+            <div id="settings-header">Select Settings</div>
+            <br />
+            <select id="category-select"></select>
+            <br />
+            <input id="load-settings" type="button" value="Load Settings">
         </div>
 </body>
 
