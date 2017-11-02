@@ -400,7 +400,7 @@
             env.keysDown[event.keyCode] = false;
         }
 
-        function handleClick(env, event) {
+        function handleClick(env) {
             if (!env.pointerLocked) {
                 console.log("requesting pointer lock");
                 env.canvas.requestPointerLock();
@@ -423,7 +423,7 @@
             }
         }
 
-        function handlePointerLockError(env) {
+        function handlePointerLockError() {
             console.log("pointer lock error");
             alert("Pointer lock failed");
         }
@@ -493,7 +493,7 @@
             return storage.getItem(category + "/" + key);
         }
 
-        function handleStoreSettings(event) {
+        function handleStoreSettings() {
             var storage = window.localStorage;
 
             var category = document.getElementById("settings-name").value;
@@ -529,7 +529,7 @@
             return result;
         }
 
-        function handleLoadSettings(env, event) {
+        function handleLoadSettings(env) {
             var category = document.getElementById("category-select").value;
             var keys = getCategoryKeys(category);
             for (var i = 0; i < keys.length; ++i) {
@@ -558,7 +558,7 @@
             }
         }
 
-        function handleDeleteSettings(env) {
+        function handleDeleteSettings() {
             var settingsName = document.getElementById("settings-name");
             var category = settingsName.value;
             deleteSettingsCategory(category);
@@ -682,10 +682,10 @@
             document.onkeydown = function(event) { handleKeyDown(env, event); };
             document.onkeyup = function(event) { handleKeyUp(env, event); };
             document.onpointerlockchange = function() { handlePointerLockChange(env); };
-            document.onpointerlockerror = function() { handlePointerLockError(env); };
+            document.onpointerlockerror = function() { handlePointerLockError(); };
             document.onmousemove = function(event) { handleMouseMove(env, event); };
 
-            canvas.onclick = function(event) { handleClick(env, event); };
+            canvas.onclick = function(event) { handleClick(env); };
 
             var vertexColorInputs = getVertexColorInputs();
             for (var i = 0; i < vertexColorInputs.length; ++i) {
@@ -693,21 +693,20 @@
             }
 
             var storeSettingsButton = document.getElementById("store-settings");
-            storeSettingsButton.onclick = function(event) { handleStoreSettings(event); }
+            storeSettingsButton.onclick = function(event) { handleStoreSettings(); }
             storeSettingsButton.disabled = true;
             var loadSettingsButton = document.getElementById("load-settings");
-            loadSettingsButton.onclick = function(event) { handleLoadSettings(env, event); }
+            loadSettingsButton.onclick = function(event) { handleLoadSettings(env); }
             var deleteSettingsButton = document.getElementById("delete-settings");
-            deleteSettingsButton.onclick = function(event) { handleDeleteSettings(env); }
+            deleteSettingsButton.onclick = function(event) { handleDeleteSettings(); }
             deleteSettingsButton.disabled = true;
             var settingsNameInput = document.getElementById("settings-name");
-            settingsNameInput.oninput = function(event) {handleSettingsNameChange(); }
+            settingsNameInput.oninput = function(event) { handleSettingsNameChange(); }
 
             requestAnimFrame(function(time) { tick(time, env); });
         }
 
         // TODOS:
-        // update handlers to not take the event if they don't use it
         // look into var vs. let
         // organize into multiple files
     </script>
