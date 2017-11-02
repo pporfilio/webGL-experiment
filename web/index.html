@@ -566,6 +566,19 @@
             settingsName.value = "";
         }
 
+        function handleSettingsNameChange() {
+            var storeSettingsButton = document.getElementById("store-settings");
+            var deleteSettingsButton = document.getElementById("delete-settings");
+            var settingsNameInput = document.getElementById("settings-name");
+            if (settingsNameInput.value) {
+                storeSettingsButton.disabled = false;
+                deleteSettingsButton.disabled = false;
+            } else {
+                storeSettingsButton.disabled = true;
+                deleteSettingsButton.disabled = true;
+            }
+        }
+
         function start() {
             var canvas = document.getElementById("glCanvas");
 
@@ -681,16 +694,19 @@
 
             var storeSettingsButton = document.getElementById("store-settings");
             storeSettingsButton.onclick = function(event) { handleStoreSettings(event); }
+            storeSettingsButton.disabled = true;
             var loadSettingsButton = document.getElementById("load-settings");
             loadSettingsButton.onclick = function(event) { handleLoadSettings(env, event); }
             var deleteSettingsButton = document.getElementById("delete-settings");
             deleteSettingsButton.onclick = function(event) { handleDeleteSettings(env); }
+            deleteSettingsButton.disabled = true;
+            var settingsNameInput = document.getElementById("settings-name");
+            settingsNameInput.oninput = function(event) {handleSettingsNameChange(); }
 
             requestAnimFrame(function(time) { tick(time, env); });
         }
 
         // TODOS:
-        // figure out how to disable buttons when settings-name is empty
         // update handlers to not take the event if they don't use it
         // look into var vs. let
         // organize into multiple files
