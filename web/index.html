@@ -229,8 +229,8 @@
             var r = parseInt(hex.slice(1, 3), 16);
             var g = parseInt(hex.slice(3, 5), 16);
             var b = parseInt(hex.slice(5, 7), 16);
-
             var a = alpha;
+
             if (a) {
                 a = clamp(a, 0, 1);
             } else {
@@ -242,7 +242,7 @@
 
         function getVertexColorInputs() {
             var result = [];
-            for (var i = 0; i < 8; ++i) {
+            for (let i = 0; i < 8; ++i) {
                 result.push(document.getElementById("vertex" + i + "color"));
             }
             return result;
@@ -251,7 +251,7 @@
         function getCubeColors() {
             var result = [];
             var colorInputs = getVertexColorInputs();
-            for (var i = 0; i < colorInputs.length; ++i) {
+            for (let i = 0; i < colorInputs.length; ++i) {
                 result = result.concat(hexToRGBA(colorInputs[i].value, 1));
             }
             return result;
@@ -259,7 +259,7 @@
 
         function getSquareColors() {
             var colors = [];
-            for (var i = 0; i < 6; ++i) {
+            for (let i = 0; i < 6; ++i) {
                 colors = colors.concat([0.5, 0.5, 1.0, 1.0]);
             }
             return colors;
@@ -275,10 +275,10 @@
         function generateCubeLocations(regionSize, regionsPerAxis) {
             var locations = [];
             var halfAxis = Math.trunc(regionsPerAxis / 2);
-            for (var x = -halfAxis; x <= halfAxis; ++x) {
-                for (var y = -halfAxis; y <= halfAxis; ++y) {
-                    for (var z = -halfAxis; z <= halfAxis; ++z) {
-                        var position = [x * regionSize + getRandomIntInclusive(0, regionSize),
+            for (let x = -halfAxis; x <= halfAxis; ++x) {
+                for (let y = -halfAxis; y <= halfAxis; ++y) {
+                    for (let z = -halfAxis; z <= halfAxis; ++z) {
+                        let position = [x * regionSize + getRandomIntInclusive(0, regionSize),
                                         y * regionSize + getRandomIntInclusive(0, regionSize),
                                         z * regionSize + getRandomIntInclusive(0, regionSize)];
                         locations.push(position);
@@ -344,21 +344,21 @@
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, env.cubeIndexBufferWrapper.buffer);
             gl.uniformMatrix4fv(env.shaderProgramWrapper.uProjectionMatrix, false, projectionMatrix);
             
-            for (var index = 0; index < env.cubeLocations.length; ++index) {
+            for (let index = 0; index < env.cubeLocations.length; ++index) {
                 cubeLocation = vec3.fromValues(env.cubeLocations[index][0],
                                                env.cubeLocations[index][1],
                                                env.cubeLocations[index][2]);
-                var scaleInput = document.getElementById("cube-scale");
-                var scaleValue = clamp(scaleInput.value, 0.5, 5);
+                let scaleInput = document.getElementById("cube-scale");
+                let scaleValue = clamp(scaleInput.value, 0.5, 5);
 
-                var cubeTransformMatrix = mat4.identity(mat4.create());
+                let cubeTransformMatrix = mat4.identity(mat4.create());
                 mat4.translate(cubeTransformMatrix, 
                                cubeTransformMatrix, 
                                cubeLocation);
                 mat4.scale(cubeTransformMatrix,
                            cubeTransformMatrix,
                            vec3.fromValues(scaleValue, scaleValue, scaleValue));
-                var modelViewMatrix = mat4.multiply(mat4.create(),
+                let modelViewMatrix = mat4.multiply(mat4.create(),
                                                     env.camera.getWorldToCameraMatrix(),
                                                     cubeTransformMatrix);
 
@@ -457,7 +457,7 @@
 
             console.log("removing category " + category);
             var keys = getCategoryKeys(category);
-            for (var i = 0; i < keys.length; ++i) {
+            for (let i = 0; i < keys.length; ++i) {
                 console.log("removing setting " + category + "/" + keys[i]);
                 storage.removeItem(category + "/" + keys[i]);
             }
@@ -504,12 +504,12 @@
 
             var keys = ["cube-scale", "settings-name"];
             var inputs = [];
-            for (var i = 0; i < keys.length; ++i) {
+            for (let i = 0; i < keys.length; ++i) {
                 inputs.push(document.getElementById(keys[i]));
             }
             inputs = inputs.concat(getVertexColorInputs());
             
-            for (var i = 0; i < inputs.length; ++i) {
+            for (let i = 0; i < inputs.length; ++i) {
                 setSettingsItem(category, inputs[i].id, inputs[i].value);
             }
         }
@@ -520,7 +520,7 @@
             if (!category) {
                 return result;
             }
-            for (var i = 0; i < storage.length; ++i) {
+            for (let i = 0; i < storage.length; ++i) {
                 if (storage.key(i).startsWith(category)) {
                     // Split the key at the first "/" and add the second part to the result list.
                     result.push(storage.key(i).split("/", 2)[1])
@@ -532,8 +532,8 @@
         function handleLoadSettings(env) {
             var category = document.getElementById("category-select").value;
             var keys = getCategoryKeys(category);
-            for (var i = 0; i < keys.length; ++i) {
-                var control = document.getElementById(keys[i]);
+            for (let i = 0; i < keys.length; ++i) {
+                let control = document.getElementById(keys[i]);
                 if (control) {
                     control.value = getSettingsItem(category, keys[i]);
                 }
@@ -551,8 +551,8 @@
                 children[0].remove();
             }
 
-            for (var i = 0; i < categories.length; ++i) {
-                var option = document.createElement("option");
+            for (let i = 0; i < categories.length; ++i) {
+                let option = document.createElement("option");
                 option.text = categories[i];
                 categorySelect.appendChild(option);
             }
@@ -688,7 +688,7 @@
             canvas.onclick = function(event) { handleClick(env); };
 
             var vertexColorInputs = getVertexColorInputs();
-            for (var i = 0; i < vertexColorInputs.length; ++i) {
+            for (let i = 0; i < vertexColorInputs.length; ++i) {
                 vertexColorInputs[i].oninput = function(event) { handleColorChange(env); };
             }
 
@@ -707,7 +707,6 @@
         }
 
         // TODOS:
-        // look into var vs. let
         // organize into multiple files
     </script>
 
