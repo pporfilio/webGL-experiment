@@ -1,53 +1,3 @@
-function initWebGL(canvas) {
-    return canvas.getContext("webGL") || canvas.getContext("experimental-webgl");
-}
-
-function loadShader(gl, text, type) {
-    var shader = gl.createShader(type);
-    gl.shaderSource(shader, text);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        alert(gl.getShaderInfoLog(shader));
-        return null;
-    }
-    return shader;
-}
-
-function createShaderProgram(gl, vertexShaderText, fragmentShaderText) {
-    var vertexShader = loadShader(gl, vertexShaderText, gl.VERTEX_SHADER);
-    var fragmentShader = loadShader(gl, fragmentShaderText, gl.FRAGMENT_SHADER);
-    var shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, vertexShader);
-    gl.attachShader(shaderProgram, fragmentShader);
-    gl.linkProgram(shaderProgram);
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        alert("Could not link shaders");
-        return null;
-    }
-    var shaderProgramWrapper = { program: shaderProgram };
-    return shaderProgramWrapper;
-}        
-
-function createFloatBuffer(gl, data, itemSize, drawType) {
-    var floatBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, floatBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), drawType);
-    var vertexBufferWrapper = { buffer: floatBuffer };
-    vertexBufferWrapper.itemSize = itemSize;
-    vertexBufferWrapper.numItems = data.length / itemSize;
-    return vertexBufferWrapper;
-}
-
-function createU16ElementBuffer(gl, data, drawType) {
-    var u16Buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, u16Buffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), drawType);
-    var u16BufferWrapper = { buffer: u16Buffer };
-    u16BufferWrapper.itemSize = 1; // indices are always single elements
-    u16BufferWrapper.numItems = data.length;
-    return u16BufferWrapper;
-}
-
 function updateCubeColors(env) {
     env.gl.bindBuffer(env.gl.ARRAY_BUFFER, env.cubeColorBufferWrapper.buffer);
     var cubeColors = getCubeColors();
@@ -375,7 +325,7 @@ function main() {
     var canvas = document.getElementById("glCanvas");
 
     // Initialize OpenGL
-    var gl = initWebGL(canvas);
+    var gl = glUtils.initWebGL(canvas);
     if (!gl) {
         alert("Unable to initialize WebGL. Your browser may not support it.");
         return;
@@ -396,7 +346,7 @@ function main() {
     var fragmentShaderElement = document.getElementById("shader-fs");
     var fragmentShaderText = fragmentShaderElement.firstChild.textContent;
 
-    var shaderProgramWrapper = createShaderProgram(gl, vertexShaderText, fragmentShaderText);
+    var shaderProgramWrapper = glUtils.createShaderProgram(gl, vertexShaderText, fragmentShaderText);
     if (!shaderProgramWrapper) {
         alert("Did not get shaderProgramWrapper");
         return;
@@ -420,33 +370,33 @@ function main() {
         gl.getUniformLocation(shaderProgramWrapper.program, "uModelViewMatrix");
 
     // Initialize Buffers
-    var triangleVertexBufferWrapper = createFloatBuffer(gl, 
-                                                        getTriangleVertices(),
-                                                        3, 
-                                                        gl.STATIC_DRAW);
-    var squareVertexBufferWrapper = createFloatBuffer(gl, 
-                                                      getSquareVertices(), 
-                                                      3,
-                                                      gl.STATIC_DRAW);
-    var triangleColorBufferWrapper = createFloatBuffer(gl,
-                                                       getTriangleColors(),
-                                                       4,
-                                                       gl.STATIC_DRAW);
-    var squareColorBufferWrapper = createFloatBuffer(gl,
-                                                     getSquareColors(),
-                                                     4,
-                                                     gl.STATIC_DRAW);
-    var cubeVertexBufferWrapper = createFloatBuffer(gl,
-                                                    getUnitCubeVertices(),
-                                                    3,
-                                                    gl.STATIC_DRAW);
-    var cubeIndexBufferWrapper = createU16ElementBuffer(gl,
-                                                        getCubeIndices(),
-                                                        gl.STATIC_DRAW);
-    var cubeColorBufferWrapper = createFloatBuffer(gl,
-                                                   getCubeColors(),
-                                                   4,
-                                                   gl.STATIC_DRAW);
+    var triangleVertexBufferWrapper = glUtils.createFloatBuffer(gl, 
+                                                                getTriangleVertices(),
+                                                                3, 
+                                                                gl.STATIC_DRAW);
+    var squareVertexBufferWrapper = glUtils.createFloatBuffer(gl, 
+                                                              getSquareVertices(), 
+                                                              3,
+                                                              gl.STATIC_DRAW);
+    var triangleColorBufferWrapper = glUtils.createFloatBuffer(gl,
+                                                               getTriangleColors(),
+                                                               4,
+                                                               gl.STATIC_DRAW);
+    var squareColorBufferWrapper = glUtils.createFloatBuffer(gl,
+                                                             getSquareColors(),
+                                                             4,
+                                                             gl.STATIC_DRAW);
+    var cubeVertexBufferWrapper = glUtils.createFloatBuffer(gl,
+                                                            getUnitCubeVertices(),
+                                                            3,
+                                                            gl.STATIC_DRAW);
+    var cubeIndexBufferWrapper = glUtils.createU16ElementBuffer(gl,
+                                                                getCubeIndices(),
+                                                                gl.STATIC_DRAW);
+    var cubeColorBufferWrapper = glUtils.createFloatBuffer(gl,
+                                                           getCubeColors(),
+                                                           4,
+                                                           gl.STATIC_DRAW);
 
     var env = {};
     env.count = 0;
