@@ -1,7 +1,7 @@
 function Camera() {
     this.pitch = 0; // radians
     this.yaw = 0; // radians
-    this.position = [0, 0, 0]
+    this.position = vec3.create();
 }
 
 Camera.prototype.addPitch = function(deltaPitch) {
@@ -29,13 +29,11 @@ Camera.prototype.getYaw = function() {
 }
 
 Camera.prototype.addPosition = function(deltaPosition) {
-    this.position[0] += deltaPosition[0];
-    this.position[1] += deltaPosition[1];
-    this.position[2] += deltaPosition[2];
+    vec3.add(this.position, this.position, deltaPosition);
 }
 
 Camera.prototype.setPosition = function(newPosition) {
-    this.position = newPosition;
+    this.position = vec3.clone(newPosition);
 }
 
 Camera.prototype.getPosition = function() {
