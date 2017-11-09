@@ -100,32 +100,6 @@ function generateCubeLocations(regionSize, regionsPerAxis) {
 function drawScene(env) {
     var gl = env.gl;
 
-    var frameTime = env.currTime - env.prevTime;
-    var speed = 500;
-    if (env.keysDown["W".charCodeAt(0)]) {
-        env.camera.moveAlongLook(frameTime / speed);
-    } 
-    if (env.keysDown["S".charCodeAt(0)]) {
-        env.camera.moveAlongLook(-frameTime / speed);
-    }
-    if (env.keysDown["A".charCodeAt(0)]) {
-        env.camera.movePerpendicularToLook(-frameTime / speed);
-    }
-    if (env.keysDown["D".charCodeAt(0)]) {
-        env.camera.movePerpendicularToLook(frameTime / speed);
-    }
-    if (env.keysDown["Q".charCodeAt(0)]) {
-        env.camera.addPosition([0, frameTime / speed, 0]);
-    }
-    if (env.keysDown["E".charCodeAt(0)]) {
-        env.camera.addPosition([0, -frameTime / speed, 0]);
-    }
-
-    env.camera.addYaw(-env.deltaX / 100);
-    env.camera.addPitch(-env.deltaY / 100);
-    env.deltaX = 0;
-    env.deltaY = 0;
-
     gl.viewport(0, 0, env.canvas.width, env.canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
 
@@ -133,8 +107,6 @@ function drawScene(env) {
     var projectionMatrix = mat4.create();
     var canvasRatio = env.canvas.width / env.canvas.height;
     mat4.perspective(projectionMatrix, 45, canvasRatio, 0.1, 100.0);
-
-    var timeDelta = env.currTime - env.startTime;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, env.cubeVertexBufferWrapper.buffer);
     gl.vertexAttribPointer(env.shaderProgramWrapper.aVertexPosition, 
@@ -168,7 +140,7 @@ function drawScene(env) {
                    cubeTransformMatrix,
                    vec3.fromValues(scaleValue, scaleValue, scaleValue));
         let modelViewMatrix = mat4.multiply(mat4.create(),
-                                            env.camera.getWorldToCameraMatrix(),
+                                            env.player.getCamera().getWorldToCameraMatrix(),
                                             cubeTransformMatrix);
 
         gl.uniformMatrix4fv(env.shaderProgramWrapper.uModelViewMatrix, 
@@ -179,6 +151,7 @@ function drawScene(env) {
 }
 
 function tick(time, env) {
+    // TODO better start condition and don't risk overflowing count
     if (env.count == 0) {
         env.startTime = time;
         env.prevTime = time;
@@ -189,11 +162,12 @@ function tick(time, env) {
     }
 
     // Draw
+    env.player.tick(env.prevTime, env.currTime);
     drawScene(env)
 
     env.count++;
 
-    if (!env.keysDown["X".charCodeAt(0)]) {
+    if (!env.exitAnimation) {
         requestAnimFrame(function (time) { tick(time, env); });
     } else {
         document.exitPointerLock();
@@ -202,11 +176,14 @@ function tick(time, env) {
 }
 
 function handleKeyDown(env, event) {
-    env.keysDown[event.keyCode] = true;
+    env.player.handleKeyDown(event);
+    if (event.keyCode == "X".charCodeAt(0)) {
+        env.exitAnimation = true;
+    }
 }
 
 function handleKeyUp(env, event) {
-    env.keysDown[event.keyCode] = false;
+    env.player.handleKeyUp(event);
 }
 
 function handleClick(env) {
@@ -239,8 +216,7 @@ function handlePointerLockError() {
 
 function handleMouseMove(env, event) {
     if (env.pointerLocked) {
-        env.deltaX += event.movementX;
-        env.deltaY += event.movementY;
+        env.player.handleMouseMove(event);
     }
 }
 
@@ -410,12 +386,10 @@ function main() {
     env.cubeIndexBufferWrapper = cubeIndexBufferWrapper;
     env.cubeColorBufferWrapper = cubeColorBufferWrapper;
     env.shaderProgramWrapper = shaderProgramWrapper;
-    env.keysDown = {};
-    env.camera = new Camera();
     env.pointerLocked = false;
-    env.deltaX = 0;
-    env.deltaY = 0;
     env.cubeLocations = generateCubeLocations(10, 10);
+    env.exitAnimation = false;
+    env.player = new Player();
 
     // Generate HTML
     populateCategorySelect();

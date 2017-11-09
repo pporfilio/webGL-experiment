@@ -42,8 +42,12 @@ Camera.prototype.getPosition = function() {
 
 Camera.prototype.getCameraRotationMatrix = function() {
     var matrix = mat4.create();
-    mat4.rotate(matrix, matrix, this.getPitch(), [1, 0, 0]);
+    // This order is important. If you change the pitch first, it moves the Y-Z axes, 
+    // so then rotating around camera Y is no longer the same as rotating about world Y.
+    // But if you change the yaw first, then you change the camera X-Z axes, but world Y
+    // is still orthogonal to them, so changing the pitch works as expected.
     mat4.rotate(matrix, matrix, this.getYaw(), [0, 1, 0]);            
+    mat4.rotate(matrix, matrix, this.getPitch(), [1, 0, 0]);
     return matrix;
 }
 
@@ -63,14 +67,16 @@ Camera.prototype.getLookVector = function() {
 
 Camera.prototype.moveAlongLook = function(distance) {
     var lookVector = this.getLookVector();
-    var moveVector = vec3.fromValues(lookVector[0], 0, lookVector[2]);
-    vec3.normalize(moveVector, moveVector);
-    this.addPosition([moveVector[0] * distance, 0, moveVector[2] * distance]);
+    console.log("lookVector: " + lookVector);
+   var moveVector = vec3.normalize(vec3.create(), lookVector);
+   console.log("move vector: " + moveVector);
+    var deltaVector = vec3.scale(vec3.create(), moveVector, distance);
+    console.log("scaled move vector: " + deltaVector);
+    this.addPosition(deltaVector);
 }
 
 Camera.prototype.movePerpendicularToLook = function(distance) {
     var orthogonal = vec3.cross(vec3.create(), this.getLookVector(), [0, 1, 0]);
-    var moveOrthogonal = vec3.fromValues(orthogonal[0], 0, orthogonal[2]);
-    vec3.normalize(moveOrthogonal, moveOrthogonal);
-    this.addPosition([moveOrthogonal[0] * distance, 0, moveOrthogonal[2] * distance])
+    var moveOrthogonal = vec3.normalize(vec3.create(), orthogonal);
+    this.addPosition(vec3.scale(moveOrthogonal, moveOrthogonal, distance));
 }
