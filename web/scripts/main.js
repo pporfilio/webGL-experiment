@@ -298,59 +298,7 @@ function handleColorChange(env) {
     updateCubeColors(env);
 }
 
-function getSettingsCategories() {
-    var storage = window.localStorage;
-    if (!storage.getItem("__categories__")) {
-        storage.setItem("__categories__", JSON.stringify([]));
-    }
-    return JSON.parse(storage.getItem("__categories__"));
-}
 
-function setSettingsCategories(categories) {
-    var storage = window.localStorage;
-    storage.setItem("__categories__", JSON.stringify(categories));
-}
-
-function deleteSettingsCategory(category) {
-    var storage = window.localStorage;
-
-    console.log("removing category " + category);
-    var keys = getCategoryKeys(category);
-    for (let i = 0; i < keys.length; ++i) {
-        console.log("removing setting " + category + "/" + keys[i]);
-        storage.removeItem(category + "/" + keys[i]);
-    }
-
-    var categories = getSettingsCategories();
-    var location = categories.findIndex(function(elt) { return elt == category; });
-    if (location != -1) {
-        categories.splice(location, 1);
-        setSettingsCategories(categories);
-        populateCategorySelect();
-    }
-}
-
-function ensureSettingsCategory(category) {
-    var categories = getSettingsCategories();
-    if (-1 == categories.findIndex(function(elt) { return elt == category; })) {
-        categories.unshift(category);
-        setSettingsCategories(categories);
-        // Can't get storage events on the same page that triggered them.
-        // According to https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
-        populateCategorySelect();
-    }
-}
-
-function setSettingsItem(category, key, value) {
-    ensureSettingsCategory(category);
-    var storage = window.localStorage;
-    storage.setItem(category + "/" + key, value);
-}
-
-function getSettingsItem(category, key) {
-    var storage = window.localStorage;
-    return storage.getItem(category + "/" + key);
-}
 
 function handleStoreSettings() {
     var storage = window.localStorage;
@@ -369,32 +317,17 @@ function handleStoreSettings() {
     inputs = inputs.concat(getVertexColorInputs());
     
     for (let i = 0; i < inputs.length; ++i) {
-        setSettingsItem(category, inputs[i].id, inputs[i].value);
+        localSettings.setSettingsItem(category, inputs[i].id, inputs[i].value);
     }
-}
-
-function getCategoryKeys(category) {
-    var storage = window.localStorage;
-    var result = [];
-    if (!category) {
-        return result;
-    }
-    for (let i = 0; i < storage.length; ++i) {
-        if (storage.key(i).startsWith(category)) {
-            // Split the key at the first "/" and add the second part to the result list.
-            result.push(storage.key(i).split("/", 2)[1])
-        }
-    }
-    return result;
 }
 
 function handleLoadSettings(env) {
     var category = document.getElementById("category-select").value;
-    var keys = getCategoryKeys(category);
+    var keys = localSettings.getCategoryKeys(category);
     for (let i = 0; i < keys.length; ++i) {
         let control = document.getElementById(keys[i]);
         if (control) {
-            control.value = getSettingsItem(category, keys[i]);
+            control.value = localSettings.getSettingsItem(category, keys[i]);
         }
     }
     // I can't figure out how to make the color changes trigger the `oninput` event
@@ -403,7 +336,7 @@ function handleLoadSettings(env) {
 
 function populateCategorySelect() {
     var categorySelect = document.getElementById("category-select");
-    var categories = getSettingsCategories();
+    var categories = localSettings.getSettingsCategories();
 
     var children = categorySelect.children;
     while (children.length != 0) {
@@ -420,7 +353,7 @@ function populateCategorySelect() {
 function handleDeleteSettings() {
     var settingsName = document.getElementById("settings-name");
     var category = settingsName.value;
-    deleteSettingsCategory(category);
+    localSettings.deleteSettingsCategory(category);
     populateCategorySelect();
     settingsName.value = "";
 }
